@@ -12,7 +12,7 @@
         android:theme="@style/Theme.ScratchPad"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name="alam.scratchpad.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:configChanges="orientation|screenSize|keyboardHidden"

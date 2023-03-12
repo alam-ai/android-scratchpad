@@ -1,4 +1,4 @@
-package com.example.scratchpad.ui.theme
+package alam.scratchpad.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

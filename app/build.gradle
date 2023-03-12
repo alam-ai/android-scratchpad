@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.scratchpad'
+    namespace 'alam.scratchpad'
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.scratchpad"
+        applicationId "alam.scratchpad"
         minSdk 21
         targetSdk 33
         versionCode 1
