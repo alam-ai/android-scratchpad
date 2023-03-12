@@ -1,4 +1,4 @@
-package alam.scratchpad
+package com.alam.scratchpad
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
@@ -33,7 +33,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.ViewModel
-import alam.scratchpad.ui.theme.ScratchPadTheme
+import com.alam.scratchpad.ui.theme.ScratchPadTheme
 
 class MainActivity : ComponentActivity() {
     private var viewModel = DrawingViewModel()

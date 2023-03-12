@@ -1,4 +1,4 @@
-package alam.scratchpad.ui.theme
+package com.alam.scratchpad.ui.theme
 
 import android.app.Activity
 import android.os.Build

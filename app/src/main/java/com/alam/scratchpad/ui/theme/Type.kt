@@ -1,4 +1,4 @@
-package alam.scratchpad.ui.theme
+package com.alam.scratchpad.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle

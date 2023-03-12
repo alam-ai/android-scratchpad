@@ -1,4 +1,4 @@
-package alam.scratchpad
+package com.alam.scratchpad
 
 import org.junit.Test
 
