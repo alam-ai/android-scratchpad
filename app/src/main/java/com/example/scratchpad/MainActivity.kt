@@ -1,6 +1,7 @@
 package com.example.scratchpad
 
 import android.annotation.SuppressLint
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.MotionEvent
 import android.widget.Toast
@@ -34,6 +35,8 @@ import androidx.core.view.WindowInsetsControllerCompat
 import com.example.scratchpad.ui.theme.ScratchPadTheme
 
 class MainActivity : ComponentActivity() {
+    private var onOrientationChange by mutableStateOf<(() -> Unit)?>(null)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -43,7 +46,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Screen()
+                    val (innerOnOrientationChange, setOnOrientationChange) = remember { mutableStateOf<(() -> Unit)?>(null) }
+                    onOrientationChange = innerOnOrientationChange
+
+                    App(setOnOrientationChange)
                 }
             }
         }
@@ -57,6 +63,12 @@ class MainActivity : ComponentActivity() {
         //windowInsetsController?.hide(WindowInsetsCompat.Type.systemBars())
         windowInsetsController?.hide(WindowInsetsCompat.Type.statusBars())
     }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        onOrientationChange?.invoke()
+    }
+
 }
 
 data class PointState (
@@ -76,7 +88,9 @@ data class PathState (
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun Screen() {
+fun App(
+    setOnOrientationChange: (() -> Unit) -> Unit,
+) {
     val (fabResetOnClick, setFabResetOnClick) = remember { mutableStateOf<(() -> Unit)?>(null) }
 
     var drawingMode by remember { mutableStateOf<DrawingMode>(DrawingMode.Pen) }
@@ -129,6 +143,7 @@ fun Screen() {
                 drawingColor = drawingColor,
                 strokeWidth = strokeWidth,
                 setFabResetOnClick = setFabResetOnClick,
+                setOnOrientationChange = setOnOrientationChange,
             )
         },
         bottomBar = {
@@ -155,10 +170,10 @@ fun ScratchPadCanvas(
     drawingBackground: Color,
     drawingColor: Color,
     strokeWidth: Float,
-    setFabResetOnClick: (() -> Unit) -> Unit
+    setFabResetOnClick: (() -> Unit) -> Unit,
+    setOnOrientationChange: (() -> Unit) -> Unit,
 ) {
     var size by remember { mutableStateOf(Size.Zero) }
-
     var scale by remember { mutableStateOf(1f) }
     var offset by remember { mutableStateOf(Offset.Zero) }
 
@@ -177,8 +192,11 @@ fun ScratchPadCanvas(
         setFabResetOnClick {
             completedPaths.clear()
             points.clear()
-            scale = 1f
+            //scale = 1f
             offset = Offset.Zero
+        }
+        setOnOrientationChange {
+            offset = Offset(size.height/2 + (offset.x - size.width/2), size.width/2 + (offset.y - size.height/2))
         }
     }
     Canvas(
@@ -225,9 +243,13 @@ fun ScratchPadCanvas(
                 transformOrigin = TransformOrigin(
                     0.5f - offset.x / size.width,
                     0.5f - offset.y / size.height
-                )
+                ),
             )
     ) {
+        //drawCircle(color = Color.Red, radius = 25f, center = Offset(0f, 0f))
+        //drawCircle(color = Color.Yellow, radius = 50f, center = Offset(size.width/2 - offset.x, size.height/2 - offset.y))
+        //drawCircle(color = Color.Blue, radius = 10f, center = startingOffset)
+
         fun drawPath(path: PathState) {
             drawPath(
                 color = path.color,
@@ -292,8 +314,6 @@ fun ScratchPadCanvas(
                 if (!point.stillDrawing) {
                     var removeLast = false
                     if (currentPath != null) {
-                        //completedPaths += currentPath
-
                         var usedPoints = listOf<Offset>()
                         for (j in incompleteStartIndex..i) {
                             if (!points[j].cancelEvent) {
