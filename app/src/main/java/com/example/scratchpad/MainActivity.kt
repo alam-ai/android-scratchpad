@@ -32,10 +32,11 @@ import androidx.compose.ui.unit.toSize
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.ViewModel
 import com.example.scratchpad.ui.theme.ScratchPadTheme
 
 class MainActivity : ComponentActivity() {
-    private var onOrientationChange by mutableStateOf<(() -> Unit)?>(null)
+    private var viewModel = DrawingViewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,10 +47,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    val (innerOnOrientationChange, setOnOrientationChange) = remember { mutableStateOf<(() -> Unit)?>(null) }
-                    onOrientationChange = innerOnOrientationChange
-
-                    App(setOnOrientationChange)
+                    App(viewModel)
                 }
             }
         }
@@ -66,12 +64,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        onOrientationChange?.invoke()
+
+        viewModel.offset = Offset(
+            viewModel.size.height / 2 + (viewModel.offset.x - viewModel.size.width / 2),
+            viewModel.size.width / 2 + (viewModel.offset.y - viewModel.size.height / 2)
+        )
     }
 
 }
 
-data class PointState (
+enum class DrawingMode {
+    Pen,
+    Erase
+}
+
+data class PointState(
     val x: Float,
     val y: Float,
     val stillDrawing: Boolean,
@@ -79,25 +86,32 @@ data class PointState (
     var partOfCompletePath: Boolean = false,
 )
 
-data class PathState (
+data class PathState(
     val path: Path,
     val color: Color,
     val strokeWidth: Float,
 )
 
+class DrawingViewModel: ViewModel() {
+    var size by mutableStateOf(Size.Zero)
+    var scale by mutableStateOf(1f)
+    var offset by mutableStateOf(Offset.Zero)
+
+    var points = mutableStateListOf<PointState>()
+    var paths = mutableStateListOf<PathState>()
+
+    var drawingMode by mutableStateOf(DrawingMode.Pen)
+    var drawingBackground by mutableStateOf(Color.White)
+    var drawingColor by mutableStateOf(Color.Black)
+    var strokeWidth by mutableStateOf(12f)
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun App(
-    setOnOrientationChange: (() -> Unit) -> Unit,
+    viewModel: DrawingViewModel
 ) {
-    val (fabResetOnClick, setFabResetOnClick) = remember { mutableStateOf<(() -> Unit)?>(null) }
-
-    var drawingMode by remember { mutableStateOf<DrawingMode>(DrawingMode.Pen) }
-    var drawingBackground by remember { mutableStateOf<Color>(Color.White) }
-    var drawingColor by remember { mutableStateOf<Color>(Color.Black) }
-    var strokeWidth by remember { mutableStateOf<Float>(12f) }
-
     Scaffold(
         floatingActionButtonPosition = FabPosition.Center,
 
@@ -107,43 +121,52 @@ fun App(
             ) {
                 FloatingActionButton(
                     onClick = {
-                        drawingMode = DrawingMode.Pen
-                        strokeWidth = 12f
-                        drawingColor = Color.Black
+                        viewModel.drawingMode = DrawingMode.Pen
+                        viewModel.strokeWidth = 12f
+                        viewModel.drawingColor = Color.Black
                     },
                 ) {
-                    Icon(painter = painterResource(R.drawable.pencil), contentDescription = "Pen", modifier = Modifier.size(26.dp))
+                    Icon(
+                        painter = painterResource(R.drawable.pencil),
+                        contentDescription = "Pen",
+                        modifier = Modifier.size(26.dp)
+                    )
                 }
                 FloatingActionButton(
                     onClick = {
-                        drawingMode = DrawingMode.Erase
-                        strokeWidth = 96f
-                        drawingColor = Color.White
+                        viewModel.drawingMode = DrawingMode.Erase
+                        viewModel.strokeWidth = 96f / viewModel.scale
+                        viewModel.drawingColor = Color.White
                     },
                 ) {
-                    Icon(painterResource(R.drawable.eraser), "Eraser", modifier = Modifier.size(26.dp))
+                    Icon(
+                        painterResource(R.drawable.eraser),
+                        "Eraser",
+                        modifier = Modifier.size(26.dp)
+                    )
                 }
                 FloatingActionButton(
                     onClick = {
-                        fabResetOnClick?.invoke()
-                        drawingMode = DrawingMode.Pen
-                        strokeWidth = 12f
-                        drawingColor = Color.Black
+                        viewModel.points.clear()
+                        viewModel.paths.clear()
+                        viewModel.offset = Offset.Zero
+                        viewModel.drawingMode = DrawingMode.Pen
+                        viewModel.strokeWidth = 12f
+                        viewModel.drawingColor = Color.Black
                     },
                 ) {
-                    Icon(painterResource(R.drawable.trash), "Reset", modifier = Modifier.size(26.dp))
+                    Icon(
+                        painterResource(R.drawable.trash),
+                        "Reset",
+                        modifier = Modifier.size(26.dp)
+                    )
                 }
             }
         },
 
         content = {
             ScratchPadCanvas(
-                drawingMode = drawingMode,
-                drawingBackground = drawingBackground,
-                drawingColor = drawingColor,
-                strokeWidth = strokeWidth,
-                setFabResetOnClick = setFabResetOnClick,
-                setOnOrientationChange = setOnOrientationChange,
+                viewModel = viewModel
             )
         },
         bottomBar = {
@@ -152,68 +175,39 @@ fun App(
     )
 
     val context = LocalContext.current
-    BackHandler() {
+    BackHandler {
         val toast = Toast.makeText(context, "Back is disabled", Toast.LENGTH_SHORT)
         toast.show()
     }
 }
 
-enum class DrawingMode {
-    Pen,
-    Erase
-}
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ScratchPadCanvas(
-    drawingMode: DrawingMode,
-    drawingBackground: Color,
-    drawingColor: Color,
-    strokeWidth: Float,
-    setFabResetOnClick: (() -> Unit) -> Unit,
-    setOnOrientationChange: (() -> Unit) -> Unit,
+    viewModel: DrawingViewModel
 ) {
-    var size by remember { mutableStateOf(Size.Zero) }
-    var scale by remember { mutableStateOf(1f) }
-    var offset by remember { mutableStateOf(Offset.Zero) }
-
     val state = rememberTransformableState { zoomChange, offsetChange, rotationChange ->
-        scale *= zoomChange
-        scale = scale.coerceIn(0.2f, 2f)
-        offset += offsetChange / scale
+        viewModel.scale *= zoomChange
+        viewModel.scale = viewModel.scale.coerceIn(0.2f, 2f)
+        viewModel.offset += offsetChange / viewModel.scale
     }
 
-    var completedPaths = remember { mutableStateListOf<PathState>() }
-    var points = remember { mutableStateListOf<PointState>() }
-
-    val useStrokeWidth = if (drawingMode == DrawingMode.Pen) strokeWidth else strokeWidth / scale
-
-    LaunchedEffect(Unit) {
-        setFabResetOnClick {
-            completedPaths.clear()
-            points.clear()
-            //scale = 1f
-            offset = Offset.Zero
-        }
-        setOnOrientationChange {
-            offset = Offset(size.height/2 + (offset.x - size.width/2), size.width/2 + (offset.y - size.height/2))
-        }
-    }
     Canvas(
         modifier = Modifier
             .clip(RectangleShape)
             .fillMaxSize()
-            .background(drawingBackground)
+            .background(viewModel.drawingBackground)
             .onGloballyPositioned {
-                size = it.size.toSize()
+                viewModel.size = it.size.toSize()
             }
             .pointerInteropFilter {
                 val mappedOffset = Offset(
-                    it.x / scale - offset.x + size.width / 2 - size.width / 2 / scale,
-                    it.y / scale - offset.y + size.height / 2 - size.height / 2 / scale
+                    it.x / viewModel.scale - viewModel.offset.x + viewModel.size.width / 2 - viewModel.size.width / 2 / viewModel.scale,
+                    it.y / viewModel.scale - viewModel.offset.y + viewModel.size.height / 2 - viewModel.size.height / 2 / viewModel.scale
                 )
 
-                points += when (it.action) {
+                viewModel.points += when (it.action) {
                     MotionEvent.ACTION_DOWN -> {
                         PointState(mappedOffset.x, mappedOffset.y, true)
                     }
@@ -236,13 +230,13 @@ fun ScratchPadCanvas(
             }
             .transformable(state = state)
             .graphicsLayer(
-                scaleX = scale,
-                scaleY = scale,
-                translationX = offset.x,
-                translationY = offset.y,
+                scaleX = viewModel.scale,
+                scaleY = viewModel.scale,
+                translationX = viewModel.offset.x,
+                translationY = viewModel.offset.y,
                 transformOrigin = TransformOrigin(
-                    0.5f - offset.x / size.width,
-                    0.5f - offset.y / size.height
+                    0.5f - viewModel.offset.x / viewModel.size.width,
+                    0.5f - viewModel.offset.y / viewModel.size.height
                 ),
             )
     ) {
@@ -271,39 +265,43 @@ fun ScratchPadCanvas(
                 return points
             }
 
-            var newPoints = listOf<Offset>()
+            val newPoints = mutableListOf<Offset>()
 
             for ((i, point) in points.withIndex()) {
                 if (i == 0 || i == points.size - 1) {
                     newPoints += point
-                }
-                else {
-                    newPoints += Offset(0.75f * point.x + 0.25f * points[i + 1].x, 0.75f * point.y + 0.25f * points[i + 1].y)
-                    newPoints += Offset(0.25f * point.x + 0.75f * points[i + 1].x, 0.25f * point.y + 0.75f * points[i + 1].y)
+                } else {
+                    newPoints += Offset(
+                        0.75f * point.x + 0.25f * points[i + 1].x,
+                        0.75f * point.y + 0.25f * points[i + 1].y
+                    )
+                    newPoints += Offset(
+                        0.25f * point.x + 0.75f * points[i + 1].x,
+                        0.25f * point.y + 0.75f * points[i + 1].y
+                    )
                 }
             }
 
-            if (iterations == 1) {
-                return newPoints
-            }
-            else {
-                return chaikinSmoothing(newPoints, iterations - 1)
-            }
+            return if (iterations == 1) newPoints else chaikinSmoothing(newPoints, iterations - 1)
         }
 
-        for (path in completedPaths) {
+        for (path in viewModel.paths) {
             drawPath(path)
         }
 
         var currentPath: PathState? = null
 
-        var incompleteStartIndex: Int = 0
+        var incompleteStartIndex = 0
 
-        for ((i, point) in points.withIndex()) {
+        for ((i, point) in viewModel.points.withIndex()) {
             if (!point.partOfCompletePath) {
                 if (!point.cancelEvent) {
                     if (currentPath == null) {
-                        currentPath = PathState(path = Path(), color = drawingColor, strokeWidth = useStrokeWidth)
+                        currentPath = PathState(
+                            path = Path(),
+                            color = viewModel.drawingColor,
+                            strokeWidth = viewModel.strokeWidth
+                        )
                         currentPath.path.moveTo(point.x, point.y)
                     } else {
                         currentPath.path.lineTo(point.x, point.y)
@@ -314,14 +312,14 @@ fun ScratchPadCanvas(
                 if (!point.stillDrawing) {
                     var removeLast = false
                     if (currentPath != null) {
-                        var usedPoints = listOf<Offset>()
+                        val usedPoints = mutableListOf<Offset>()
                         for (j in incompleteStartIndex..i) {
-                            if (!points[j].cancelEvent) {
-                                usedPoints += Offset(points[j].x, points[j].y)
+                            if (!viewModel.points[j].cancelEvent) {
+                                usedPoints += Offset(viewModel.points[j].x, viewModel.points[j].y)
                             }
                         }
 
-                        if (drawingMode == DrawingMode.Pen) {
+                        if (viewModel.drawingMode == DrawingMode.Pen) {
                             val smoothedPoints = chaikinSmoothing(usedPoints, 3)
                             val smoothedPath = Path()
                             for ((j, smoothedPoint) in smoothedPoints.withIndex()) {
@@ -331,13 +329,13 @@ fun ScratchPadCanvas(
                                     smoothedPath.lineTo(smoothedPoint.x, smoothedPoint.y)
                                 }
                             }
-                            completedPaths += PathState(
+                            viewModel.paths += PathState(
                                 path = smoothedPath,
-                                color = drawingColor,
-                                strokeWidth = useStrokeWidth
+                                color = viewModel.drawingColor,
+                                strokeWidth = viewModel.strokeWidth
                             )
                         } else {
-                            completedPaths += currentPath
+                            viewModel.paths += currentPath
                         }
 
                         if (point.cancelEvent) {
@@ -347,11 +345,11 @@ fun ScratchPadCanvas(
                     currentPath = null
 
                     for (j in incompleteStartIndex..i) {
-                        points[j].partOfCompletePath = true
+                        viewModel.points[j].partOfCompletePath = true
                     }
 
                     if (removeLast) {
-                        completedPaths.removeLast()
+                        viewModel.paths.removeLast()
                     }
 
                     incompleteStartIndex = i + 1
@@ -362,7 +360,7 @@ fun ScratchPadCanvas(
         }
 
         if (incompleteStartIndex - 1 >= 0) {
-            points.removeRange(0, incompleteStartIndex - 1)
+            viewModel.points.removeRange(0, incompleteStartIndex - 1)
         }
     }
 }
