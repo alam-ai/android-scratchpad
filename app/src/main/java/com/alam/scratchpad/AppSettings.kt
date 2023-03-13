@@ -4,7 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 class AppSettings {
     companion object {
-        val DefaultStrokeWidth = 12f
+        val DefaultStrokeWidth = 16f
         val DefaultEraserWidth = 96f
         val DefaultBackgroundColor = Color.White
         val DefaultDrawingColor = Color.Black
