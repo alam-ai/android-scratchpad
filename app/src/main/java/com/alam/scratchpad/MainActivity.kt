@@ -71,7 +71,6 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter", "UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun App(
-    //model: DrawingModel
     drawingController: DrawingController
 ) {
     Scaffold(
@@ -98,7 +97,7 @@ fun App(
                 ) {
                     Icon(
                         painterResource(R.drawable.eraser),
-                        "Eraser",
+                        contentDescription = "Eraser",
                         modifier = Modifier.size(26.dp)
                     )
                 }
@@ -109,7 +108,7 @@ fun App(
                 ) {
                     Icon(
                         painterResource(R.drawable.trash),
-                        "Reset",
+                        contentDescription = "Reset",
                         modifier = Modifier.size(26.dp)
                     )
                 }

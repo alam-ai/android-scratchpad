@@ -6,7 +6,7 @@ class Utilities {
     companion object {
         // Implementation of Chaikin's Algorithm for corner smoothing
         // adapted from: https://observablehq.com/@pamacha/chaikins-algorithm
-        fun chaikinSmoothing(points: List<Offset>, iterations: Int, smoothFirstPoint: Boolean = false): List<Offset> {
+        fun chaikinSmoothing(points: List<Offset>, iterations: Int): List<Offset> {
             if (iterations == 0) {
                 return points
             }
@@ -18,7 +18,7 @@ class Utilities {
             val newPoints = mutableListOf<Offset>()
 
             for ((i, point) in points.withIndex()) {
-                if ((!smoothFirstPoint && i == 0) || i == points.size - 1) {
+                if (i == 0 || i == points.size - 1) {
                     newPoints += point
                 } else {
                     newPoints += Offset(
