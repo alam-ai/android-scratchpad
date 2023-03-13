@@ -4,8 +4,8 @@ Scratch Pad is a minimalist whiteboard app. Use it as you would use scratch pape
 
 ## Features
 * **Pen**, **Eraser**, and **Clear All** to quickly start a new scratch - simple and minimalist
-* **Pan** and **zoom** using two fingers - you have as much as space for your scratch as you need
-* Back gesture disabled so drawing near the left/right edge does not accidentally close app
+* **Pan** and **zoom** using two fingers - you have as much space for your scratch as you need
+* Back gesture disabled so drawing near the left/right edge won't accidentally close app
 * No ads - screen space is all for your scratch work
 
 ## TODO
