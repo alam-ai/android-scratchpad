@@ -33,8 +33,8 @@ class DrawingController(private val model: DrawingModel) {
     }
     fun onOrientationChanged() {
         model.offset = Offset(
-            model.size.height / 2 + (model.offset.x - model.size.width / 2),
-            model.size.width / 2 + (model.offset.y - model.size.height / 2)
+            model.fullSize.height / 2 + (model.offset.x - model.fullSize.width / 2),
+            model.fullSize.width / 2 + (model.offset.y - model.fullSize.height / 2)
         )
     }
     fun addPoint(point: Offset) {
@@ -72,6 +72,9 @@ class DrawingController(private val model: DrawingModel) {
             point.x / model.scale - model.offset.x + model.size.width / 2 - model.size.width / 2 / model.scale,
             point.y / model.scale - model.offset.y + model.size.height / 2 - model.size.height / 2 / model.scale
         )
+    }
+    fun setFullSize(size: Size) {
+        model.fullSize = size
     }
     fun setSize(size: Size) {
         model.size = size

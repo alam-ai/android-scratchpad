@@ -8,6 +8,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 
 class DrawingModel {
+    var fullSize by mutableStateOf(Size.Zero) // unpadded size without exclusions
     var size by mutableStateOf(Size.Zero)
     var scale by mutableStateOf(1f)
     var offset by mutableStateOf(Offset.Zero)

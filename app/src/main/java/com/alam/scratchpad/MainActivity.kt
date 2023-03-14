@@ -36,6 +36,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.alam.scratchpad.ui.theme.ScratchPadTheme
 
+
 class MainActivity : ComponentActivity() {
     private val drawingController = DrawingController(DrawingModel())
 
@@ -89,7 +90,9 @@ fun App(
         floatingActionButton = {
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.alpha(0.7f).mandatorySystemGesturesPadding()
+                modifier = Modifier
+                    .alpha(0.7f)
+                    .mandatorySystemGesturesPadding()
             ) {
                 FloatingActionButton(
                     onClick = {
@@ -164,13 +167,22 @@ fun ScratchPadCanvas(
             .clip(RectangleShape)
             .fillMaxSize()
             .background(drawingBackground)
+            .onGloballyPositioned {
+                drawingController.setFullSize(it.size.toSize())
+            }
             .systemGestureExclusion {
                 // Exclude left side
-                Rect(Offset(0f, 0f), Offset(200f, it.size.height.toFloat()))
+                Rect(
+                    Offset(0f, 0f),
+                    Offset(200f, it.size.height.toFloat())
+                )
             }
             .systemGestureExclusion {
                 // Exclude right side
-                Rect(Offset(it.size.width.toFloat() - 200f, 0f), Offset(it.size.width.toFloat(), it.size.height.toFloat()))
+                Rect(
+                    Offset(it.size.width.toFloat() - 200f, 0f),
+                    Offset(it.size.width.toFloat(), it.size.height.toFloat())
+                )
             }
             .mandatorySystemGesturesPadding()
             .onGloballyPositioned {
