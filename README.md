@@ -9,9 +9,11 @@ Scratch Pad is a simple whiteboard app. You can use it like you would scratch pa
 * Simple and minimalist
 
 ## Screenshots
-<img src="screenshot1.jpg" height=500>
-<img src="screenshot2.jpg" height=500>
-<img src="screenshot3.jpg" height=500>
+<p align="middle">
+    <img src="screenshot1.jpg" width=300>
+    <img src="screenshot2.jpg" width=300>
+    <img src="screenshot3.jpg" width=300>
+</p>
 
 ## UX Considerations
 * Infinite edge-to-edge canvas that expands as you pan and zoom
