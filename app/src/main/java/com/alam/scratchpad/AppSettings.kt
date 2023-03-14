@@ -9,7 +9,7 @@ class AppSettings {
 
         val AvailableDrawingColors = listOf(
             Color.Black,
-            Color(0xFF21409A), //Color.Blue,
+            Color(0xFF1E488F), //Color.Blue,
             //Color(0xFF039C4B), //Color.Green
             Color(0xFFF44546), //Color.Red,
         )
