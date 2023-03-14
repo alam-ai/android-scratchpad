@@ -8,12 +8,14 @@ import androidx.compose.ui.graphics.Path
 class DrawingController(private val model: DrawingModel) {
     fun setPenMode() {
         model.drawingMode = DrawingMode.Pen
-        model.strokeWidth = AppSettings.DefaultStrokeWidth
-        model.drawingColor = AppSettings.DefaultDrawingColor
+        //model.strokeWidth = AppSettings.DefaultStrokeWidth
+        //model.drawingColor = AppSettings.DefaultDrawingColor
+        model.drawingColor = AppSettings.AvailableDrawingColors[model.cycleDrawingColorCurrentIndex]
+        model.strokeWidth = AppSettings.AvailableStrokeWidths[model.cycleStrokeWidthCurrentIndex]
     }
     fun setEraseMode() {
         model.drawingMode = DrawingMode.Erase
-        model.strokeWidth = AppSettings.DefaultEraserWidth / model.scale
+        model.strokeWidth = AppSettings.AvailableStrokeWidths[model.cycleStrokeWidthCurrentIndex]
         model.drawingColor = AppSettings.DefaultBackgroundColor
     }
     fun clearAll() {
@@ -21,6 +23,16 @@ class DrawingController(private val model: DrawingModel) {
         model.paths.clear()
         model.offset = Offset.Zero
         setPenMode()
+    }
+    fun cycleDrawingColor() {
+        val nextIndex = (model.cycleDrawingColorCurrentIndex + 1) % AppSettings.AvailableDrawingColors.size
+        model.cycleDrawingColorCurrentIndex = nextIndex
+        model.drawingColor = AppSettings.AvailableDrawingColors[nextIndex]
+    }
+    fun cycleStrokeWidth() {
+        val nextIndex = (model.cycleStrokeWidthCurrentIndex + 1) % AppSettings.AvailableStrokeWidths.size
+        model.cycleStrokeWidthCurrentIndex = nextIndex
+        model.strokeWidth = AppSettings.AvailableStrokeWidths[nextIndex]
     }
     fun updateScale(delta: Float) {
         model.scale *= delta
@@ -44,10 +56,11 @@ class DrawingController(private val model: DrawingModel) {
         model.points.clear()
     }
     fun getPointsPath(): Path {
-        val points =
-            if (model.drawingMode == DrawingMode.Pen)
-                Utilities.chaikinSmoothing(model.points, AppSettings.SmoothingIterations)
-            else model.points
+//        val points =
+//            if (model.drawingMode == DrawingMode.Pen)
+//                Utilities.chaikinSmoothing(model.points, AppSettings.SmoothingIterations)
+//            else model.points
+        val points = Utilities.chaikinSmoothing(model.points, AppSettings.SmoothingIterations)
 
         val path = Path()
         for ((i, point) in points.withIndex()) {
@@ -63,7 +76,7 @@ class DrawingController(private val model: DrawingModel) {
         model.paths += DrawPath(
             path = getPointsPath(),
             color = model.drawingColor,
-            strokeWidth = model.strokeWidth
+            strokeWidth = getStrokeWidth()
         )
         clearPoints()
     }
@@ -82,6 +95,9 @@ class DrawingController(private val model: DrawingModel) {
     fun getSize(): Size {
         return model.size
     }
+    fun getDrawingMode(): DrawingMode {
+        return model.drawingMode
+    }
     fun getDrawPaths(): List<DrawPath> {
         return model.paths
     }
@@ -98,6 +114,16 @@ class DrawingController(private val model: DrawingModel) {
         return model.drawingColor
     }
     fun getStrokeWidth(): Float {
-        return model.strokeWidth
+        return if (model.drawingMode != DrawingMode.Erase) {
+            model.strokeWidth
+        } else {
+            model.strokeWidth * AppSettings.EraserStrokeWidthMultiplier / model.scale
+        }
+    }
+    fun getStrokeWidthIndex(): Int {
+        return model.cycleStrokeWidthCurrentIndex
+    }
+    fun getDrawingColorIndex(): Int {
+        return model.cycleDrawingColorCurrentIndex
     }
 }

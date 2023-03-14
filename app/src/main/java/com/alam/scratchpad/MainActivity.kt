@@ -96,12 +96,29 @@ fun App(
             ) {
                 FloatingActionButton(
                     onClick = {
-                        drawingController.setPenMode()
+                        if (drawingController.getDrawingMode() != DrawingMode.Pen) {
+                            drawingController.setPenMode()
+                        } else {
+                            drawingController.cycleDrawingColor()
+                        }
                     },
                 ) {
                     Icon(
-                        painter = painterResource(R.drawable.pencil),
+                        painter = painterResource(R.drawable.pen),
                         contentDescription = "Pen",
+                        modifier = Modifier.size(26.dp),
+                        tint = AppSettings.AvailableDrawingColors[drawingController.getDrawingColorIndex()]
+                    )
+                }
+                FloatingActionButton(
+                    onClick = {
+                        drawingController.cycleStrokeWidth()
+                    },
+                ) {
+                    val sizeIcons = listOf(R.drawable.size1, R.drawable.size2)
+                    Icon(
+                        painter = painterResource(sizeIcons[drawingController.getStrokeWidthIndex()]),
+                        contentDescription = "Stroke Width",
                         modifier = Modifier.size(26.dp)
                     )
                 }
