@@ -18,9 +18,15 @@ import androidx.core.view.ViewCompat
 import androidx.compose.ui.graphics.Color
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Color.Black,
+    primary = Color(0xB2FFFFFF),
+    //primary = Color(0xCCFFFFFF),
     primaryContainer = Color(0xFFF1F1F1),
+    //primaryContainer = Color(0xB2F1F1F1),
     onPrimaryContainer = Color.Black,
+    //onPrimaryContainer = Color(0xB2000000),
+    background = Color.White,
+    surface = Color.White,
+    inversePrimary = Color.White
 
     //secondary = Color.Black,
     //background = Color.Black,
@@ -37,15 +43,15 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color.Black,
-    primaryContainer = Color.Black,
-    secondary = Color.Black,
+    primary = Color(0xB2FFFFFF),
+    //primary = Color(0xCCFFFFFF),
+    primaryContainer = Color(0xFFF1F1F1),
+    //primaryContainer = Color(0xB2F1F1F1),
+    onPrimaryContainer = Color.Black,
+    //onPrimaryContainer = Color(0xB2000000),
     background = Color.White,
     surface = Color.White,
-    onPrimary = Color.White,
-    onSecondary = Color.Black,
-    onBackground = Color.Black,
-    onSurface = Color.Black,
+    inversePrimary = Color.White
 
     /* Other default colors to override
     background = Color.White,

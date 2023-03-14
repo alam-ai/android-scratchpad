@@ -2,32 +2,35 @@ package com.alam.scratchpad
 
 import android.annotation.SuppressLint
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
 import android.view.MotionEvent
-import android.widget.Toast
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.rememberTransformableState
 import androidx.compose.foundation.gestures.transformable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.material.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInteropFilter
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.toSize
+import androidx.core.view.ViewCompat.*
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -36,28 +39,36 @@ import com.alam.scratchpad.ui.theme.ScratchPadTheme
 class MainActivity : ComponentActivity() {
     private val drawingController = DrawingController(DrawingModel())
 
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Can show the drawing behind the status/navigation bars
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        val windowInsetsController =
+            WindowCompat.getInsetsController(window, window.decorView)
+
+        // When using BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE and hiding system bars,
+        // there is no limit to the amount of exclusion (otherwise only the bottom
+        // part of the defined areas will be excluded).
+        windowInsetsController?.systemBarsBehavior =
+            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        windowInsetsController?.hide(WindowInsetsCompat.Type.systemBars())
+
+        windowInsetsController?.isAppearanceLightStatusBars = true
+
         setContent {
             ScratchPadTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    modifier = Modifier.fillMaxSize().systemBarsPadding(),
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     App(drawingController)
                 }
             }
         }
-
-        val windowInsetsController =
-            WindowCompat.getInsetsController(window, window.decorView)
-        // Configure the behavior of the hidden system bars.
-        windowInsetsController?.systemBarsBehavior =
-            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-
-        //windowInsetsController?.hide(WindowInsetsCompat.Type.systemBars())
-        windowInsetsController?.hide(WindowInsetsCompat.Type.statusBars())
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -77,7 +88,8 @@ fun App(
         floatingActionButtonPosition = FabPosition.Center,
         floatingActionButton = {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.alpha(0.7f).mandatorySystemGesturesPadding()
             ) {
                 FloatingActionButton(
                     onClick = {
@@ -108,7 +120,7 @@ fun App(
                 ) {
                     Icon(
                         painterResource(R.drawable.trash),
-                        contentDescription = "Reset",
+                        contentDescription = "Clear All",
                         modifier = Modifier.size(26.dp)
                     )
                 }
@@ -121,13 +133,13 @@ fun App(
         }
     )
 
-    if (AppSettings.BackButtonDisabled) {
-        val context = LocalContext.current
-        BackHandler {
-            val toast = Toast.makeText(context, "Back is disabled", Toast.LENGTH_SHORT)
-            toast.show()
-        }
-    }
+//    if (AppSettings.BackButtonDisabled) {
+//        val context = LocalContext.current
+//        BackHandler {
+//            val toast = Toast.makeText(context, "Back is disabled", Toast.LENGTH_SHORT)
+//            toast.show()
+//        }
+//    }
 }
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -155,30 +167,34 @@ fun ScratchPadCanvas(
             .onGloballyPositioned {
                 drawingController.setSize(it.size.toSize())
             }
+            .systemGestureExclusion {
+                // Exclude left side
+                Rect(Offset(0f, 0f), Offset(200f, it.size.height.toFloat()))
+            }
+            .systemGestureExclusion {
+                // Exclude right side
+                Rect(Offset(it.size.width.toFloat() - 200f, 0f), Offset(it.size.width.toFloat(), it.size.height.toFloat()))
+            }
+            .mandatorySystemGesturesPadding()
             .pointerInteropFilter {
                 val mappedOffset = drawingController.getMappedOffset(Offset(it.x, it.y))
 
-                if (it.pointerCount == 1) {
-                    when (it.action) {
-                        MotionEvent.ACTION_DOWN -> {
-                            drawingController.addPoint(mappedOffset)
-                        }
-                        MotionEvent.ACTION_MOVE -> {
-                            drawingController.addPoint(mappedOffset)
-                        }
-                        MotionEvent.ACTION_UP -> {
-                            drawingController.addPoint(mappedOffset)
-                            drawingController.addPointsToPaths()
-                        }
-                        else -> {
-                            // cancel likely from swipe from edge (back)
-                            drawingController.clearPoints()
-                        }
+                when (it.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        drawingController.addPoint(mappedOffset)
                     }
-                } else {
-                    // cancel from panning / zooming with 2 fingers
-                    drawingController.clearPoints()
+                    MotionEvent.ACTION_MOVE -> {
+                        drawingController.addPoint(mappedOffset)
+                    }
+                    MotionEvent.ACTION_UP -> {
+                        drawingController.addPoint(mappedOffset)
+                        drawingController.addPointsToPaths()
+                    }
+                    else -> {
+                        drawingController.clearPoints()
+                    }
                 }
+
                 true
             }
             .transformable(state = transformState)
@@ -190,7 +206,7 @@ fun ScratchPadCanvas(
                 transformOrigin = TransformOrigin(
                     0.5f - offset.x / size.width,
                     0.5f - offset.y / size.height
-                ),
+                )
             )
     ) {
         fun drawPath(path: DrawPath) {

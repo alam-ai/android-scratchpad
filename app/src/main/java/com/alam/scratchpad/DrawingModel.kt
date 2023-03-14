@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
 
 class DrawingModel {
     var size by mutableStateOf(Size.Zero)
@@ -17,7 +16,7 @@ class DrawingModel {
     var paths = mutableStateListOf<DrawPath>() // smoothed paths, completed
 
     var drawingMode by mutableStateOf(DrawingMode.Pen)
-    var drawingBackground by mutableStateOf(Color.White)
-    var drawingColor by mutableStateOf(Color.Black)
-    var strokeWidth by mutableStateOf(12f)
+    var drawingBackground by mutableStateOf(AppSettings.DefaultBackgroundColor)
+    var drawingColor by mutableStateOf(AppSettings.DefaultDrawingColor)
+    var strokeWidth by mutableStateOf(AppSettings.DefaultStrokeWidth)
 }
