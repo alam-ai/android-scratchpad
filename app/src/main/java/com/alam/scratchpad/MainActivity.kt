@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
             ScratchPadTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
-                    modifier = Modifier.fillMaxSize().systemBarsPadding(),
+                    modifier = Modifier.fillMaxSize(), //.systemBarsPadding(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
                     App(drawingController)
@@ -164,9 +164,6 @@ fun ScratchPadCanvas(
             .clip(RectangleShape)
             .fillMaxSize()
             .background(drawingBackground)
-            .onGloballyPositioned {
-                drawingController.setSize(it.size.toSize())
-            }
             .systemGestureExclusion {
                 // Exclude left side
                 Rect(Offset(0f, 0f), Offset(200f, it.size.height.toFloat()))
@@ -176,6 +173,9 @@ fun ScratchPadCanvas(
                 Rect(Offset(it.size.width.toFloat() - 200f, 0f), Offset(it.size.width.toFloat(), it.size.height.toFloat()))
             }
             .mandatorySystemGesturesPadding()
+            .onGloballyPositioned {
+                drawingController.setSize(it.size.toSize())
+            }
             .pointerInteropFilter {
                 val mappedOffset = drawingController.getMappedOffset(Offset(it.x, it.y))
 
